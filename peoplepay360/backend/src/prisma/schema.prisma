@@ -43,6 +43,19 @@ enum TimeOffStatus {
   REFUSED
 }
 
+enum SalaryRuleCategory {
+  BASIC
+  ALLOWANCE
+  DEDUCTION
+  GROSS
+  NET
+}
+
+enum ComputationType {
+  FIXED
+  PERCENTAGE
+}
+
 model User {
   id              Int              @id @default(autoincrement())
   name            String
@@ -99,13 +112,35 @@ model Contract {
   @@index([employeeId])
 }
 
-// Referenced by Contract.salaryStructureId. Kept minimal until pay rules are specced.
 model SalaryStructure {
-  id        Int        @id @default(autoincrement())
-  name      String     @unique
+  id        Int          @id @default(autoincrement())
+  name      String       @unique
+  active    Boolean      @default(true)
+  rules     SalaryRule[]
   contracts Contract[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+// The payroll engine reads these in `sequence` order. `percentageOfCode` may only name a rule
+// with a lower sequence, which is what keeps the dependency graph acyclic and evaluable in one
+// forward pass. salaryService enforces that across the whole structure, not just per row.
+model SalaryRule {
+  id               Int                @id @default(autoincrement())
+  structureId      Int
+  structure        SalaryStructure    @relation(fields: [structureId], references: [id], onDelete: Cascade)
+  name             String
+  code             String
+  category         SalaryRuleCategory
+  sequence         Int
+  computationType  ComputationType
+  value            Decimal            @db.Decimal(12, 2)
+  percentageOfCode String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@unique([structureId, code])
+  @@unique([structureId, sequence])
 }
 
 // pattern: [{ day, startTime, endTime, breakMinutes }]

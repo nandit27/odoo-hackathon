@@ -1,5 +1,5 @@
 const authService = require("../services/authService");
-const { HR_ROLES } = require("../utils/scope");
+const { HR_ROLES, PAYROLL_READ_ROLES, PAYROLL_WRITE_ROLES } = require("../utils/scope");
 
 function bearerToken(req) {
   const [scheme, token] = (req.headers.authorization || "").split(" ");
@@ -51,5 +51,15 @@ function requireRole(...roles) {
 }
 
 const requireHrStaff = requireRole(...HR_ROLES);
+const requirePayrollRead = requireRole(...PAYROLL_READ_ROLES);
+const requirePayrollWrite = requireRole(...PAYROLL_WRITE_ROLES);
 
-module.exports = { requireAuth, optionalAuth, requireRole, requireHrStaff, HR_ROLES };
+module.exports = {
+  requireAuth,
+  optionalAuth,
+  requireRole,
+  requireHrStaff,
+  requirePayrollRead,
+  requirePayrollWrite,
+  HR_ROLES,
+};

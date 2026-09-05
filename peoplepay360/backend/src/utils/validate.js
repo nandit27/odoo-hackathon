@@ -20,4 +20,27 @@ function parseDate(value, label) {
   return date;
 }
 
-module.exports = { httpError, parseId, parseDate };
+function parseText(value, label) {
+  if (typeof value !== "string" || value.trim() === "") {
+    throw httpError(`${label} is required`);
+  }
+  return value.trim();
+}
+
+function parseBoolean(value, label) {
+  if (typeof value !== "boolean") {
+    throw httpError(`${label} must be true or false`);
+  }
+  return value;
+}
+
+// Membership check against a Prisma enum object, so the allowed list never drifts from the schema.
+function enumValue(enumObject, value, label) {
+  const allowed = Object.values(enumObject);
+  if (!allowed.includes(value)) {
+    throw httpError(`${label} must be one of: ${allowed.join(", ")}`);
+  }
+  return value;
+}
+
+module.exports = { httpError, parseId, parseDate, parseText, parseBoolean, enumValue };
