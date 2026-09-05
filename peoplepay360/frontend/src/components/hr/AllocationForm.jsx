@@ -1,12 +1,240 @@
 import { useState } from "react";
 
-export default function AllocationForm({ initialValues, employees, types, onSubmit, onCancel, submitting, serverError }) {
-  const [values, setValues] = useState(initialValues); const [errors, setErrors] = useState({});
-  const inputClass = "mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
-  function change(event) { const next = { ...values, [event.target.name]: event.target.value }; if (event.target.name === "employeeId") { const employee = employees.find((item) => item.id === event.target.value); if (employee) next.employeeName = employee.fullName; } if (event.target.name === "timeOffTypeId") { const type = types.find((item) => item.id === event.target.value); if (type) next.timeOffTypeName = type.name; } setValues(next); setErrors((current) => ({ ...current, [event.target.name]: "" })); }
-  function submit(event) { event.preventDefault(); const next = {}; if (!values.employeeId) next.employeeId = "Employee is required."; if (!values.timeOffTypeId) next.timeOffTypeId = "Time off type is required."; if (!values.validFrom) next.validFrom = "Valid from date is required."; if (!values.validUntil) next.validUntil = "Valid until date is required."; if (values.validFrom && values.validUntil && values.validUntil < values.validFrom) next.validUntil = "Valid until cannot be earlier than valid from."; if (!Number.isFinite(Number(values.allocatedDays)) || Number(values.allocatedDays) <= 0) next.allocatedDays = "Allocated days must be greater than zero."; setErrors(next); if (!Object.keys(next).length) onSubmit(values); }
-  return <form onSubmit={submit} noValidate className="overflow-hidden border border-slate-200 bg-white shadow-sm">{serverError && <div role="alert" className="border-b border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">{serverError}</div>}<div className="grid gap-x-6 gap-y-5 p-5 sm:grid-cols-2 sm:p-6"><Select label="Employee" name="employeeId" value={values.employeeId} onChange={change} error={errors.employeeId} className={inputClass} placeholder="Select employee" options={employees.map((employee) => [employee.id, `${employee.fullName} (${employee.employeeId})`])} /><Select label="Time off type" name="timeOffTypeId" value={values.timeOffTypeId} onChange={change} error={errors.timeOffTypeId} className={inputClass} placeholder="Select time off type" options={types.filter((type) => type.status === "Active" || type.id === values.timeOffTypeId).map((type) => [type.id, type.name])} /><Field label="Valid from" name="validFrom" type="date" value={values.validFrom} onChange={change} error={errors.validFrom} className={inputClass} /><Field label="Valid until" name="validUntil" type="date" value={values.validUntil} onChange={change} error={errors.validUntil} className={inputClass} /><Field label="Allocated days" name="allocatedDays" type="number" min="0.5" step="0.5" value={values.allocatedDays} onChange={change} error={errors.allocatedDays} className={inputClass} /><Select label="Status" name="status" value={values.status} onChange={change} className={inputClass} options={[["Active", "Active"], ["Draft", "Draft"], ["Expired", "Expired"]]} /><label className="text-sm font-medium text-slate-700 sm:col-span-2">Notes <span className="font-normal text-slate-400">(optional)</span><textarea name="notes" rows="4" value={values.notes} onChange={change} className={inputClass} /></label></div><div className="flex justify-end gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:px-6"><button type="button" onClick={onCancel} className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</button><button type="submit" disabled={submitting} className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60">{submitting ? "Saving…" : "Save allocation"}</button></div></form>;
+export default function AllocationForm({
+  initialValues,
+  employees,
+  types,
+  onSubmit,
+  onCancel,
+  submitting,
+  serverError,
+}) {
+  const [values, setValues] = useState(initialValues);
+  const [errors, setErrors] = useState({});
+  const inputClass =
+    "mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
+  function change(event) {
+    const next = { ...values, [event.target.name]: event.target.value };
+    if (event.target.name === "employeeId") {
+      const employee = employees.find((item) => item.employeeId === event.target.value);
+      if (employee) {
+        next.employeeId = employee.employeeId;
+        next.employeeName = employee.fullName;
+      }
+    }
+    if (event.target.name === "timeOffTypeId") {
+      const type = types.find((item) => item.id === event.target.value);
+      if (type) next.timeOffTypeName = type.name;
+    }
+    setValues(next);
+    setErrors((current) => ({ ...current, [event.target.name]: "" }));
+  }
+  function submit(event) {
+    event.preventDefault();
+
+    const next = {};
+
+    if (!values.employeeId) next.employeeId = "Employee is required.";
+
+    if (!values.timeOffTypeId)
+      next.timeOffTypeId = "Time off type is required.";
+
+    if (!values.validFrom) next.validFrom = "Valid from date is required.";
+
+    if (!values.validUntil) next.validUntil = "Valid until date is required.";
+
+    if (
+      values.validFrom &&
+      values.validUntil &&
+      values.validUntil < values.validFrom
+    )
+      next.validUntil = "Valid until cannot be earlier than valid from.";
+
+    if (
+      !Number.isFinite(Number(values.allocatedDays)) ||
+      Number(values.allocatedDays) <= 0
+    )
+      next.allocatedDays = "Allocated days must be greater than zero.";
+
+    setErrors(next);
+
+    if (!Object.keys(next).length) onSubmit(values);
+  }
+  return (
+    <form
+      onSubmit={submit}
+      noValidate
+      className="overflow-hidden border border-slate-200 bg-white shadow-sm"
+    >
+      {serverError && (
+        <div
+          role="alert"
+          className="border-b border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700"
+        >
+          {serverError}
+        </div>
+      )}
+      <div className="grid gap-x-6 gap-y-5 p-5 sm:grid-cols-2 sm:p-6">
+        <Select
+          label="Employee"
+          name="employeeId"
+          value={values.employeeId}
+          onChange={change}
+          error={errors.employeeId}
+          className={inputClass}
+          placeholder="Select employee"
+          options={employees.map((employee) => [
+            employee.employeeId,
+            `${employee.fullName} (${employee.employeeId})`,
+          ])}
+        />
+        <Select
+          label="Time off type"
+          name="timeOffTypeId"
+          value={values.timeOffTypeId}
+          onChange={change}
+          error={errors.timeOffTypeId}
+          className={inputClass}
+          placeholder="Select time off type"
+          options={types
+            .filter(
+              (type) =>
+                type.status === "Active" || type.id === values.timeOffTypeId,
+            )
+            .map((type) => [type.id, type.name])}
+        />
+        <Field
+          label="Valid from"
+          name="validFrom"
+          type="date"
+          value={values.validFrom}
+          onChange={change}
+          error={errors.validFrom}
+          className={inputClass}
+        />
+        <Field
+          label="Valid until"
+          name="validUntil"
+          type="date"
+          value={values.validUntil}
+          onChange={change}
+          error={errors.validUntil}
+          className={inputClass}
+        />
+        <Field
+          label="Allocated days"
+          name="allocatedDays"
+          type="number"
+          min="0.5"
+          step="0.5"
+          value={values.allocatedDays}
+          onChange={change}
+          error={errors.allocatedDays}
+          className={inputClass}
+        />
+        <Select
+          label="Status"
+          name="status"
+          value={values.status}
+          onChange={change}
+          className={inputClass}
+          options={[
+            ["Active", "Active"],
+            ["Draft", "Draft"],
+            ["Expired", "Expired"],
+          ]}
+        />
+        <label className="text-sm font-medium text-slate-700 sm:col-span-2">
+          Notes <span className="font-normal text-slate-400">(optional)</span>
+          <textarea
+            name="notes"
+            rows="4"
+            value={values.notes}
+            onChange={change}
+            className={inputClass}
+          />
+        </label>
+      </div>
+      <div className="flex justify-end gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={submitting}
+          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+        >
+          {submitting ? "Saving…" : "Save allocation"}
+        </button>
+      </div>
+    </form>
+  );
 }
-function Field({ label, name, type, value, onChange, error, className, ...props }) { return <label className="text-sm font-medium text-slate-700">{label} <Required /><input {...props} name={name} type={type} value={value} onChange={onChange} className={className} aria-invalid={Boolean(error)} /><Error text={error} /></label>; }
-function Select({ label, name, value, onChange, error, className, placeholder, options }) { return <label className="text-sm font-medium text-slate-700">{label} <Required /><select name={name} value={value} onChange={onChange} className={className}><option value="">{placeholder}</option>{options.map(([id, text]) => <option key={id} value={id}>{text}</option>)}</select><Error text={error} /></label>; }
-function Required() { return <span className="text-red-600">*</span>; } function Error({ text }) { return text ? <span className="mt-1 block text-xs text-red-600">{text}</span> : null; }
+function Field({
+  label,
+  name,
+  type,
+  value,
+  onChange,
+  error,
+  className,
+  ...props
+}) {
+  return (
+    <label className="text-sm font-medium text-slate-700">
+      {label} <Required />
+      <input
+        {...props}
+        name={name}
+        type={type}
+        value={value}
+        onChange={onChange}
+        className={className}
+        aria-invalid={Boolean(error)}
+      />
+      <Error text={error} />
+    </label>
+  );
+}
+function Select({
+  label,
+  name,
+  value,
+  onChange,
+  error,
+  className,
+  placeholder,
+  options,
+}) {
+  return (
+    <label className="text-sm font-medium text-slate-700">
+      {label} <Required />
+      <select
+        name={name}
+        value={value}
+        onChange={onChange}
+        className={className}
+      >
+        <option value="">{placeholder}</option>
+        {options.map(([id, text]) => (
+          <option key={id} value={id}>
+            {text}
+          </option>
+        ))}
+      </select>
+      <Error text={error} />
+    </label>
+  );
+}
+function Required() {
+  return <span className="text-red-600">*</span>;
+}
+function Error({ text }) {
+  return text ? (
+    <span className="mt-1 block text-xs text-red-600">{text}</span>
+  ) : null;
+}

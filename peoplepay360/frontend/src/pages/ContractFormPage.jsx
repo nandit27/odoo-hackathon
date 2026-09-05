@@ -22,8 +22,9 @@ export default function ContractFormPage() {
         setEmployees(people);
         if (existing) setContract(existing);
         else {
-          const employee = people.find((item) => item.id === searchParams.get("employeeId"));
-          setContract(employee ? { ...emptyContract, employeeId: employee.id, employeeName: employee.fullName, position: employee.position, employmentType: employee.employmentType, workingSchedule: employee.workingSchedule } : emptyContract);
+          const requestedEmployeeId = searchParams.get("employeeId");
+          const employee = people.find((item) => item.id === requestedEmployeeId || item.employeeId === requestedEmployeeId);
+          setContract(employee ? { ...emptyContract, employeeId: employee.employeeId, employeeName: employee.fullName, position: employee.position, employmentType: employee.employmentType, workingSchedule: employee.workingSchedule } : emptyContract);
         }
       }).catch((err) => setLoadError(err.message || "Contract form could not be loaded."));
   }, [editing, id, searchParams]);

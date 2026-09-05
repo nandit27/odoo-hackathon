@@ -1,4 +1,79 @@
-export default function AllocationFilterBar({ search, onSearch, typeId, onTypeId, types, status, onStatus, year, onYear, years, onClear }) {
-  const control = "h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
-  return <div className="grid gap-2 border-b border-slate-200 bg-slate-50/70 p-3 sm:grid-cols-2 sm:px-5 lg:flex lg:items-center"><label className="min-w-0 lg:max-w-md lg:flex-1"><span className="sr-only">Search employee</span><input type="search" value={search} onChange={(event) => onSearch(event.target.value)} placeholder="Search employee or allocation ID" className={`${control} w-full`} /></label><label><span className="sr-only">Time off type</span><select value={typeId} onChange={(event) => onTypeId(event.target.value)} className={`${control} w-full lg:w-48`}><option value="">All leave types</option>{types.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}</select></label><label><span className="sr-only">Status</span><select value={status} onChange={(event) => onStatus(event.target.value)} className={`${control} w-full lg:w-40`}><option value="">All statuses</option><option>Active</option><option>Expired</option><option>Draft</option></select></label><label><span className="sr-only">Period year</span><select value={year} onChange={(event) => onYear(event.target.value)} className={`${control} w-full lg:w-36`}><option value="">All periods</option>{years.map((item) => <option key={item}>{item}</option>)}</select></label><button type="button" onClick={onClear} disabled={!search && !typeId && !status && !year} className="h-10 px-3 text-left text-sm font-medium text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-40 lg:text-center">Clear filters</button></div>;
+export default function AllocationFilterBar({
+  search,
+  onSearch,
+  typeId,
+  onTypeId,
+  types,
+  status,
+  onStatus,
+  year,
+  onYear,
+  years,
+  onClear,
+}) {
+  const control =
+    "h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
+  return (
+    <div className="grid gap-2 border-b border-slate-200 bg-slate-50/70 p-3 sm:grid-cols-2 sm:px-5 lg:flex lg:items-center">
+      <label className="min-w-0 lg:max-w-md lg:flex-1">
+        <span className="sr-only">Search employee</span>
+        <input
+          type="search"
+          value={search}
+          onChange={(event) => onSearch(event.target.value)}
+          placeholder="Search employee or allocation ID"
+          className={`${control} w-full`}
+        />
+      </label>
+      <label>
+        <span className="sr-only">Time off type</span>
+        <select
+          value={typeId}
+          onChange={(event) => onTypeId(event.target.value)}
+          className={`${control} w-full lg:w-48`}
+        >
+          <option value="">All leave types</option>
+          {types.map((type) => (
+            <option key={type.id} value={type.id}>
+              {type.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        <span className="sr-only">Status</span>
+        <select
+          value={status}
+          onChange={(event) => onStatus(event.target.value)}
+          className={`${control} w-full lg:w-40`}
+        >
+          <option value="">All statuses</option>
+          <option>Active</option>
+          <option>Expired</option>
+          <option>Draft</option>
+        </select>
+      </label>
+      <label>
+        <span className="sr-only">Period year</span>
+        <select
+          value={year}
+          onChange={(event) => onYear(event.target.value)}
+          className={`${control} w-full lg:w-36`}
+        >
+          <option value="">All periods</option>
+          {years.map((item) => (
+            <option key={item}>{item}</option>
+          ))}
+        </select>
+      </label>
+      <button
+        type="button"
+        onClick={onClear}
+        disabled={!search && !typeId && !status && !year}
+        className="h-10 px-3 text-left text-sm font-medium text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-40 lg:text-center"
+      >
+        Clear filters
+      </button>
+    </div>
+  );
 }

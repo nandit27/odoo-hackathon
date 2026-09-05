@@ -7,8 +7,8 @@ export default function ContractForm({ initialValues, employees, onSubmit, onCan
   function change(event) {
     const next = { ...values, [event.target.name]: event.target.value };
     if (event.target.name === "employeeId") {
-      const employee = employees.find((item) => item.id === event.target.value);
-      if (employee) { next.employeeName = employee.fullName; next.position = employee.position; next.employmentType = employee.employmentType; next.workingSchedule = employee.workingSchedule; }
+      const employee = employees.find((item) => item.employeeId === event.target.value);
+      if (employee) { next.employeeId = employee.employeeId; next.employeeName = employee.fullName; next.position = employee.position; next.employmentType = employee.employmentType; next.workingSchedule = employee.workingSchedule; }
     }
     setValues(next); setErrors((current) => ({ ...current, [event.target.name]: "" }));
   }
@@ -30,7 +30,7 @@ export default function ContractForm({ initialValues, employees, onSubmit, onCan
     {serverError && <div role="alert" className="border-b border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">{serverError}</div>}
     <div className="grid gap-x-6 gap-y-5 p-5 sm:grid-cols-2 sm:p-6">
       <Field label="Contract ID" name="contractId" value={values.contractId} onChange={change} error={errors.contractId} className={inputClass} />
-      <label className="text-sm font-medium text-slate-700">Employee <Required /><select name="employeeId" value={values.employeeId} onChange={change} className={inputClass}><option value="">Select employee</option>{employees.map((employee) => <option key={employee.id} value={employee.id}>{employee.fullName} ({employee.employeeId})</option>)}</select><Error text={errors.employeeId} /></label>
+      <label className="text-sm font-medium text-slate-700">Employee <Required /><select name="employeeId" value={values.employeeId} onChange={change} className={inputClass}><option value="">Select employee</option>{employees.map((employee) => <option key={employee.id} value={employee.employeeId}>{employee.fullName} ({employee.employeeId})</option>)}</select><Error text={errors.employeeId} /></label>
       <Field label="Job position" name="position" value={values.position} onChange={change} error={errors.position} className={inputClass} />
       <Select label="Employment type" name="employmentType" value={values.employmentType} onChange={change} error={errors.employmentType} className={inputClass} options={["Full-time", "Part-time", "Contract", "Intern"]} />
       <Field label="Start date" name="startDate" type="date" value={values.startDate} onChange={change} error={errors.startDate} className={inputClass} />
