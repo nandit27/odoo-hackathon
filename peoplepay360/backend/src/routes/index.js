@@ -7,6 +7,8 @@ const contractRoutes = require("./contracts");
 const attendanceRoutes = require("./attendance");
 const timeOffRoutes = require("./timeoff");
 const salaryRoutes = require("./salary");
+const payrunRoutes = require("./payruns");
+const payslipRoutes = require("./payslips");
 
 const router = express.Router();
 
@@ -24,5 +26,7 @@ router.use("/timeoff", requireAuth, timeOffRoutes);
 
 // Salary configuration splits read from write, so its router carries two different role guards.
 router.use("/salary", requireAuth, salaryRoutes);
+router.use("/payruns", requireAuth, payrunRoutes);
+router.use("/payslips", requireAuth, payslipRoutes);
 
 module.exports = router;
