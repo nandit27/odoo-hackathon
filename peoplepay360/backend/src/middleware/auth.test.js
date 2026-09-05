@@ -6,7 +6,7 @@ const test = require("node:test");
 const assert = require("node:assert");
 const jwt = require("jsonwebtoken");
 
-const { requireAuth, optionalAuth, requireRole } = require("./auth");
+const { requireAuth, optionalAuth, requireRole, requireHrStaff, HR_ROLES } = require("./auth");
 
 function fakeRes() {
   const res = { statusCode: null, body: null };
@@ -31,13 +31,23 @@ function run(middleware, req) {
 }
 
 const adminToken = jwt.sign({ userId: 1, role: "ADMIN" }, process.env.JWT_SECRET);
-const employeeToken = jwt.sign({ userId: 2, role: "EMPLOYEE" }, process.env.JWT_SECRET);
+const employeeToken = jwt.sign(
+  { userId: 2, role: "EMPLOYEE", employeeId: 42 },
+  process.env.JWT_SECRET
+);
 
 test("requireAuth attaches req.user for a valid token", () => {
   const req = { headers: { authorization: `Bearer ${adminToken}` } };
   const { nextCalled } = run(requireAuth, req);
   assert.ok(nextCalled);
-  assert.deepStrictEqual(req.user, { userId: 1, role: "ADMIN" });
+  // A token minted before employeeId existed still yields the same shape.
+  assert.deepStrictEqual(req.user, { userId: 1, role: "ADMIN", employeeId: null });
+});
+
+test("requireAuth forwards employeeId so routes can scope to the caller", () => {
+  const req = { headers: { authorization: `Bearer ${employeeToken}` } };
+  run(requireAuth, req);
+  assert.deepStrictEqual(req.user, { userId: 2, role: "EMPLOYEE", employeeId: 42 });
 });
 
 test("requireAuth rejects a missing token", () => {
@@ -91,8 +101,18 @@ test("requireRole allows listed roles and blocks the rest", () => {
   assert.strictEqual(unauthenticated.res.statusCode, 401);
 });
 
-test("login-shaped payload round-trips userId and role", () => {
+test("requireHrStaff admits every HR role and blocks EMPLOYEE", () => {
+  for (const role of HR_ROLES) {
+    assert.ok(run(requireHrStaff, { user: { userId: 1, role } }).nextCalled, role);
+  }
+  const blocked = run(requireHrStaff, { user: { userId: 2, role: "EMPLOYEE" } });
+  assert.strictEqual(blocked.nextCalled, false);
+  assert.strictEqual(blocked.res.statusCode, 403);
+});
+
+test("login-shaped payload round-trips userId, role and employeeId", () => {
   const decoded = jwt.verify(employeeToken, process.env.JWT_SECRET);
   assert.strictEqual(decoded.userId, 2);
   assert.strictEqual(decoded.role, "EMPLOYEE");
+  assert.strictEqual(decoded.employeeId, 42);
 });

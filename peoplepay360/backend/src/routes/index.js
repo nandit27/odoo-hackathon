@@ -1,24 +1,24 @@
 const express = require("express");
 const healthController = require("../controllers/healthController");
-const { requireAuth, requireRole } = require("../middleware/auth");
+const { requireAuth, requireHrStaff } = require("../middleware/auth");
 const employeeRoutes = require("./employees");
 const scheduleRoutes = require("./schedules");
 const contractRoutes = require("./contracts");
+const attendanceRoutes = require("./attendance");
+const timeOffRoutes = require("./timeoff");
 
 const router = express.Router();
 
-// Every HR resource below is gated on one list, so a new router cannot ship unprotected.
-const HR_STAFF = requireRole(
-  "ADMIN",
-  "HR_MANAGER",
-  "HR_PAYROLL_USER",
-  "HR_PAYROLL_MANAGER"
-);
-
 router.get("/health", healthController.check);
 
-router.use("/employees", requireAuth, HR_STAFF, employeeRoutes);
-router.use("/schedules", requireAuth, HR_STAFF, scheduleRoutes);
-router.use("/contracts", requireAuth, HR_STAFF, contractRoutes);
+// Every HR resource below is gated on one role list, so a new router cannot ship unprotected.
+router.use("/employees", requireAuth, requireHrStaff, employeeRoutes);
+router.use("/schedules", requireAuth, requireHrStaff, scheduleRoutes);
+router.use("/contracts", requireAuth, requireHrStaff, contractRoutes);
+
+// Attendance and time off are the exceptions: employees may read their own rows, so the role
+// check moves down into those routers and the services scope the queries.
+router.use("/attendance", requireAuth, attendanceRoutes);
+router.use("/timeoff", requireAuth, timeOffRoutes);
 
 module.exports = router;

@@ -1,8 +1,15 @@
 const authService = require("../services/authService");
+const { HR_ROLES } = require("../utils/scope");
 
 function bearerToken(req) {
   const [scheme, token] = (req.headers.authorization || "").split(" ");
   return scheme === "Bearer" && token ? token : null;
+}
+
+// employeeId defaults to null so tokens minted before it was added still yield a stable shape.
+function actorFrom(token) {
+  const { userId, role, employeeId = null } = authService.verifyToken(token);
+  return { userId, role, employeeId };
 }
 
 function requireAuth(req, res, next) {
@@ -11,8 +18,7 @@ function requireAuth(req, res, next) {
     return res.status(401).json({ error: "Missing Bearer token" });
   }
   try {
-    const { userId, role } = authService.verifyToken(token);
-    req.user = { userId, role };
+    req.user = actorFrom(token);
     next();
   } catch (err) {
     res.status(401).json({ error: "Invalid or expired token" });
@@ -24,8 +30,7 @@ function optionalAuth(req, res, next) {
   const token = bearerToken(req);
   if (token) {
     try {
-      const { userId, role } = authService.verifyToken(token);
-      req.user = { userId, role };
+      req.user = actorFrom(token);
     } catch (err) {
       // Bad token is treated as anonymous, not as an error.
     }
@@ -45,4 +50,6 @@ function requireRole(...roles) {
   };
 }
 
-module.exports = { requireAuth, optionalAuth, requireRole };
+const requireHrStaff = requireRole(...HR_ROLES);
+
+module.exports = { requireAuth, optionalAuth, requireRole, requireHrStaff, HR_ROLES };

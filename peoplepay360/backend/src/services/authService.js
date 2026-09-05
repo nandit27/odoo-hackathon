@@ -100,9 +100,13 @@ async function login({ email, password } = {}) {
     throw httpError("invalid email or password", 401);
   }
 
-  const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, {
-    expiresIn: JWT_EXPIRES_IN,
-  });
+  // employeeId rides in the token so per-employee scoping needs no extra query. It is a
+  // snapshot: relinking a user to another employee only takes effect on their next login.
+  const token = jwt.sign(
+    { userId: user.id, role: user.role, employeeId: user.employeeId },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN }
+  );
 
   return { token, user: publicUser(user) };
 }
