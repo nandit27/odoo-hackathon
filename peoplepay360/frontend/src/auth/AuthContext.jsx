@@ -1,12 +1,17 @@
 import { createContext, useContext, useMemo, useState } from "react";
-import api from "../api/axios.js";
+import {
+  authenticateDemoUser,
+  getDemoUserByEmail,
+  toSessionUser,
+} from "./demoUsers.js";
 
-const SESSION_KEY = "peoplepay360.session";
+const SESSION_KEY = "peoplepay360.demoSessionEmail";
 const AuthContext = createContext(null);
 
 function restoreSession() {
   try {
-    return JSON.parse(localStorage.getItem(SESSION_KEY));
+    const email = localStorage.getItem(SESSION_KEY);
+    return toSessionUser(getDemoUserByEmail(email));
   } catch {
     return null;
   }
@@ -16,20 +21,16 @@ export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(restoreSession);
 
   async function login(email, password) {
-    try {
-      const { data } = await api.post("/auth/login", { email, password });
-      setCurrentUser(data.user);
-      localStorage.setItem(SESSION_KEY, JSON.stringify(data.user));
-      localStorage.setItem("peoplepay360.token", data.token);
-      return { success: true, user: data.user };
-    } catch (err) {
-      return { success: false, error: err.response?.data?.error || "Email or password is incorrect." };
-    }
+    const user = authenticateDemoUser(email, password);
+    if (!user) return { success: false, error: "Email or password is incorrect." };
+    const sessionUser = toSessionUser(user);
+    setCurrentUser(sessionUser);
+    localStorage.setItem(SESSION_KEY, sessionUser.email);
+    return { success: true, user: sessionUser };
   }
 
   function logout() {
     localStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem("peoplepay360.token");
     setCurrentUser(null);
   }
 
