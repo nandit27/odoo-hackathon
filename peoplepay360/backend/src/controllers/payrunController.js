@@ -5,6 +5,7 @@ const handle = (fn, status = 200) => async (req, res, next) => {
 };
 
 module.exports = {
+  list: handle(() => payrunService.findPayruns()),
   create: handle((req) => payrunService.createPayrun(req.body, req.user), 201),
   eligibleEmployees: handle((req) => payrunService.eligibleEmployees(req.params.id)),
   createPayslips: handle((req) => payrunService.createPayslips(req.params.id, req.body), 201),
@@ -13,4 +14,5 @@ module.exports = {
   markPaid: handle((req) => payrunService.markPaid(req.params.id)),
   show: handle((req) => payrunService.findPayrun(req.params.id)),
   showPayslip: handle((req) => payrunService.findPayslip(req.params.id)),
+  listPayslips: handle(() => payrunService.findPayslips()),
 };

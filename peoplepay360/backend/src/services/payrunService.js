@@ -139,6 +139,13 @@ async function findPayrun(idParam) {
   return getPayrun(idParam, { payslips: { include: { employee: { select: { id: true, name: true } } } } });
 }
 
+function findPayruns() {
+  return prisma.payrun.findMany({
+    include: { payslips: { include: { employee: { select: { id: true, name: true, department: true, jobPosition: true } } } } },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
 async function findPayslip(idParam) {
   const id = parseId(idParam);
   const payslip = await prisma.payslip.findUnique({ include: { employee: { select: { id: true, name: true } }, contract: true, lines: { include: { salaryRule: true } } }, where: { id } });
@@ -146,4 +153,11 @@ async function findPayslip(idParam) {
   return payslip;
 }
 
-module.exports = { applicableContractWhere, calculateLines, createPayrun, eligibleEmployees, createPayslips, compute, validate, markPaid, findPayrun, findPayslip };
+function findPayslips() {
+  return prisma.payslip.findMany({
+    include: { employee: { select: { id: true, name: true, department: true, jobPosition: true } }, payrun: true },
+    orderBy: { generatedAt: "desc" },
+  });
+}
+
+module.exports = { applicableContractWhere, calculateLines, createPayrun, eligibleEmployees, createPayslips, compute, validate, markPaid, findPayruns, findPayrun, findPayslips, findPayslip };

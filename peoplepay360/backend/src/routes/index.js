@@ -9,6 +9,8 @@ const timeOffRoutes = require("./timeoff");
 const salaryRoutes = require("./salary");
 const payrunRoutes = require("./payruns");
 const payslipRoutes = require("./payslips");
+const dashboardController = require("../controllers/dashboardController");
+const { requirePayrollRead } = require("../middleware/auth");
 
 const router = express.Router();
 
@@ -28,5 +30,6 @@ router.use("/timeoff", requireAuth, timeOffRoutes);
 router.use("/salary", requireAuth, salaryRoutes);
 router.use("/payruns", requireAuth, payrunRoutes);
 router.use("/payslips", requireAuth, payslipRoutes);
+router.get("/dashboard", requireAuth, requirePayrollRead, dashboardController.show);
 
 module.exports = router;

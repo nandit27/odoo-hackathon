@@ -92,10 +92,10 @@ export default function NewPayrun() {
     filteredEmployees.every((e) => selectedEmpIds.includes(e.id));
 
   // Final Submit
-  const handleCreatePayrun = () => {
+  const handleCreatePayrun = async () => {
     if (selectedEmpIds.length === 0) return;
 
-    const newPr = createPayrun({
+    const newPr = await createPayrun({
       name,
       period,
       startDate,

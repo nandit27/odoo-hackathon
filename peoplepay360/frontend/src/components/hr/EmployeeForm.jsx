@@ -1,9 +1,9 @@
 import { useState } from "react";
 
-const fields = [["employeeId", "Employee ID", "text"], ["firstName", "First name", "text"], ["lastName", "Last name", "text"], ["workEmail", "Work email", "email"], ["phone", "Phone", "tel"], ["department", "Department", "text"], ["position", "Position", "text"], ["manager", "Manager", "text"], ["workingSchedule", "Working schedule", "text"], ["joiningDate", "Joining date", "date"]];
-const labels = { employeeId: "Employee ID", firstName: "First name", lastName: "Last name", workEmail: "Work email", phone: "Phone", department: "Department", position: "Position", manager: "Manager", workingSchedule: "Working schedule", joiningDate: "Joining date", employmentType: "Employment type", status: "Status", address: "Address" };
+const fields = [["firstName", "First name", "text"], ["lastName", "Last name", "text"], ["workEmail", "Work email", "email"], ["phone", "Phone", "tel"], ["department", "Department", "text"], ["position", "Position", "text"], ["joiningDate", "Joining date", "date"]];
+const labels = { firstName: "First name", lastName: "Last name", workEmail: "Work email", phone: "Phone", department: "Department", position: "Position", joiningDate: "Joining date", employmentType: "Employment type", status: "Status", address: "Address" };
 
-export default function EmployeeForm({ initialValues, onSubmit, onCancel, submitting, serverError }) {
+export default function EmployeeForm({ initialValues, managers, schedules, onSubmit, onCancel, submitting, serverError }) {
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState({});
   const inputClass = "mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
@@ -19,6 +19,8 @@ export default function EmployeeForm({ initialValues, onSubmit, onCancel, submit
     {serverError && <div role="alert" className="border-b border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">{serverError}</div>}
     <div className="grid gap-x-6 gap-y-5 p-5 sm:grid-cols-2 sm:p-6">
       {fields.map(([name, label, type]) => <Field key={name} {...{ name, label, type, values, errors, change, inputClass }} />)}
+      <label className="text-sm font-medium text-slate-700">Manager<select name="managerId" value={values.managerId || ""} onChange={change} className={inputClass}><option value="">No manager</option>{managers.map((manager) => <option key={manager.id} value={manager.id}>{manager.fullName}</option>)}</select></label>
+      <label className="text-sm font-medium text-slate-700">Working schedule<select name="scheduleId" value={values.scheduleId || ""} onChange={change} className={inputClass}><option value="">No schedule</option>{schedules.map((schedule) => <option key={schedule.id} value={schedule.id}>{schedule.name}</option>)}</select></label>
       <label className="text-sm font-medium text-slate-700">Employment type <Required /><select name="employmentType" value={values.employmentType} onChange={change} className={inputClass}><option value="">Select type</option><option>Full-time</option><option>Part-time</option><option>Contract</option><option>Intern</option></select><Error text={errors.employmentType} /></label>
       <label className="text-sm font-medium text-slate-700">Status <Required /><select name="status" value={values.status} onChange={change} className={inputClass}><option>Active</option><option>On Leave</option><option>Inactive</option></select><Error text={errors.status} /></label>
       <label className="text-sm font-medium text-slate-700 sm:col-span-2">Address <Required /><textarea name="address" rows="3" value={values.address} onChange={change} className={inputClass} /><Error text={errors.address} /></label>

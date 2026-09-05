@@ -20,7 +20,7 @@ export default function Login() {
     setMessage("");
   }
 
-  function submit(event) {
+  async function submit(event) {
     event.preventDefault();
     const next = {};
     if (!values.email.trim()) next.email = "Work email is required.";
@@ -28,7 +28,7 @@ export default function Login() {
     if (!values.password) next.password = "Password is required.";
     setErrors(next);
     if (!Object.keys(next).length) {
-      const result = login(values.email, values.password);
+      const result = await login(values.email, values.password);
       if (!result.success) setMessage(result.error);
       else navigate(getHomeRoute(result.user.role), { replace: true, state: { from: location.state?.from } });
     }

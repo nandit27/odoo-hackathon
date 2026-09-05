@@ -1,32 +1,35 @@
 import { createContext, useContext, useMemo, useState } from "react";
-import { authenticateDemoUser, getDemoUserByEmail, toSessionUser } from "./demoUsers.js";
+import api from "../api/axios.js";
 
-const SESSION_KEY = "peoplepay360.demoSessionEmail";
+const SESSION_KEY = "peoplepay360.session";
 const AuthContext = createContext(null);
 
 function restoreSession() {
   try {
-    return toSessionUser(getDemoUserByEmail(localStorage.getItem(SESSION_KEY)));
+    return JSON.parse(localStorage.getItem(SESSION_KEY));
   } catch {
     return null;
   }
 }
 
-// Frontend-only demo session. Backend APIs must enforce authentication and authorization in production.
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(restoreSession);
 
-  function login(email, password) {
-    const demoUser = authenticateDemoUser(email, password);
-    if (!demoUser) return { success: false, error: "Email or password is incorrect." };
-    const sessionUser = toSessionUser(demoUser);
-    setCurrentUser(sessionUser);
-    localStorage.setItem(SESSION_KEY, sessionUser.email);
-    return { success: true, user: sessionUser };
+  async function login(email, password) {
+    try {
+      const { data } = await api.post("/auth/login", { email, password });
+      setCurrentUser(data.user);
+      localStorage.setItem(SESSION_KEY, JSON.stringify(data.user));
+      localStorage.setItem("peoplepay360.token", data.token);
+      return { success: true, user: data.user };
+    } catch (err) {
+      return { success: false, error: err.response?.data?.error || "Email or password is incorrect." };
+    }
   }
 
   function logout() {
     localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem("peoplepay360.token");
     setCurrentUser(null);
   }
 
