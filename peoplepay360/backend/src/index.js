@@ -3,6 +3,7 @@ const cors = require("cors");
 require("dotenv").config();
 
 const routes = require("./routes");
+const authRoutes = require("./routes/auth");
 const notFound = require("./middleware/notFound");
 const errorHandler = require("./middleware/errorHandler");
 
@@ -17,11 +18,17 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
+app.use("/auth", authRoutes);
 app.use("/api", routes);
 
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`peoplepay360 API running on http://localhost:${PORT}`);
-});
+// Only bind a port when started directly, so tests can require the app.
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`peoplepay360 API running on http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;

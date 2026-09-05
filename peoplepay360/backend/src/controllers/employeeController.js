@@ -9,6 +9,15 @@ async function list(req, res, next) {
   }
 }
 
+async function show(req, res, next) {
+  try {
+    const employee = await employeeService.findById(req.params.id);
+    res.json(employee);
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function create(req, res, next) {
   try {
     const employee = await employeeService.create(req.body);
@@ -18,4 +27,13 @@ async function create(req, res, next) {
   }
 }
 
-module.exports = { list, create };
+async function update(req, res, next) {
+  try {
+    const employee = await employeeService.update(req.params.id, req.body);
+    res.json(employee);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { list, show, create, update };

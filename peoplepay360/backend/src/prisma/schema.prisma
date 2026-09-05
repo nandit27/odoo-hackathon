@@ -25,38 +25,71 @@ enum ContractStatus {
   EXPIRED
 }
 
+enum AttendanceStatus {
+  NORMAL
+  LATE
+  ABSENT
+  MANUAL_EDIT
+}
+
+enum TimeOffUnit {
+  DAYS
+  HOURS
+}
+
+enum TimeOffStatus {
+  PENDING
+  APPROVED
+  REFUSED
+}
+
+enum SalaryRuleCategory {
+  BASIC
+  ALLOWANCE
+  DEDUCTION
+  GROSS
+  NET
+}
+
+enum ComputationType {
+  FIXED
+  PERCENTAGE
+}
+
 model User {
-  id           Int       @id @default(autoincrement())
-  name         String
-  email        String    @unique
-  passwordHash String
-  role         Role      @default(EMPLOYEE)
-  employeeId   Int?      @unique
-  employee     Employee? @relation(fields: [employeeId], references: [id])
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id              Int              @id @default(autoincrement())
+  name            String
+  email           String           @unique
+  passwordHash    String
+  role            Role             @default(EMPLOYEE)
+  employeeId      Int?             @unique
+  employee        Employee?        @relation(fields: [employeeId], references: [id])
+  approvedTimeOff TimeOffRequest[] @relation("TimeOffApprover")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 }
 
 model Employee {
-  id          Int              @id @default(autoincrement())
-  name        String
-  email       String           @unique
-  department  String
-  jobPosition String
-  managerId   Int?
-  manager     Employee?        @relation("EmployeeManager", fields: [managerId], references: [id])
-  reports     Employee[]       @relation("EmployeeManager")
-  scheduleId  Int?
-  schedule    WorkingSchedule? @relation(fields: [scheduleId], references: [id])
-  status      EmployeeStatus   @default(ACTIVE)
-  dateJoined  DateTime         @default(now()) @db.Date
-  user        User?
-  contracts   Contract[]
-  attendance  Attendance[]
-  timeOffs    TimeOff[]
-  payrolls    Payroll[]
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  id                 Int                 @id @default(autoincrement())
+  name               String
+  email              String              @unique
+  department         String
+  jobPosition        String
+  managerId          Int?
+  manager            Employee?           @relation("EmployeeManager", fields: [managerId], references: [id])
+  reports            Employee[]          @relation("EmployeeManager")
+  scheduleId         Int?
+  schedule           WorkingSchedule?    @relation(fields: [scheduleId], references: [id])
+  status             EmployeeStatus      @default(ACTIVE)
+  dateJoined         DateTime            @default(now()) @db.Date
+  user               User?
+  contracts          Contract[]
+  attendance         Attendance[]
+  timeOffAllocations TimeOffAllocation[]
+  timeOffRequests    TimeOffRequest[]
+  payrolls           Payroll[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 
   @@index([managerId])
 }
@@ -79,13 +112,35 @@ model Contract {
   @@index([employeeId])
 }
 
-// Referenced by Contract.salaryStructureId. Kept minimal until pay rules are specced.
 model SalaryStructure {
-  id        Int        @id @default(autoincrement())
-  name      String     @unique
+  id        Int          @id @default(autoincrement())
+  name      String       @unique
+  active    Boolean      @default(true)
+  rules     SalaryRule[]
   contracts Contract[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+// The payroll engine reads these in `sequence` order. `percentageOfCode` may only name a rule
+// with a lower sequence, which is what keeps the dependency graph acyclic and evaluable in one
+// forward pass. salaryService enforces that across the whole structure, not just per row.
+model SalaryRule {
+  id               Int                @id @default(autoincrement())
+  structureId      Int
+  structure        SalaryStructure    @relation(fields: [structureId], references: [id], onDelete: Cascade)
+  name             String
+  code             String
+  category         SalaryRuleCategory
+  sequence         Int
+  computationType  ComputationType
+  value            Decimal            @db.Decimal(12, 2)
+  percentageOfCode String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@unique([structureId, code])
+  @@unique([structureId, sequence])
 }
 
 // pattern: [{ day, startTime, endTime, breakMinutes }]
@@ -100,27 +155,68 @@ model WorkingSchedule {
   updatedAt   DateTime   @updatedAt
 }
 
+// workedHours is derived from checkOut - checkIn in attendanceService, never trusted from a client.
 model Attendance {
-  id         Int       @id @default(autoincrement())
-  employeeId Int
-  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  date       DateTime  @db.Date
-  checkIn    DateTime?
-  checkOut   DateTime?
-  status     String    @default("present")
-  createdAt  DateTime  @default(now())
+  id          Int              @id @default(autoincrement())
+  employeeId  Int
+  employee    Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date        DateTime         @db.Date
+  checkIn     DateTime
+  checkOut    DateTime?
+  workedHours Decimal?         @db.Decimal(5, 2)
+  status      AttendanceStatus @default(NORMAL)
+  createdAt   DateTime         @default(now())
+
+  @@index([employeeId, date])
 }
 
-model TimeOff {
-  id         Int      @id @default(autoincrement())
-  employeeId Int
-  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  type       String
-  startDate  DateTime @db.Date
-  endDate    DateTime @db.Date
-  reason     String?
-  status     String   @default("pending")
-  createdAt  DateTime @default(now())
+model TimeOffType {
+  id                 Int                 @id @default(autoincrement())
+  name               String              @unique
+  unit               TimeOffUnit         @default(DAYS)
+  requiresAllocation Boolean             @default(true)
+  affectsPayroll     Boolean             @default(false)
+  allocations        TimeOffAllocation[]
+  requests           TimeOffRequest[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+}
+
+// `remaining` (allocated - taken) is derived in timeOffService, never stored.
+model TimeOffAllocation {
+  id            Int         @id @default(autoincrement())
+  employeeId    Int
+  employee      Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  timeOffTypeId Int
+  timeOffType   TimeOffType @relation(fields: [timeOffTypeId], references: [id])
+  allocated     Decimal     @db.Decimal(6, 2)
+  taken         Decimal     @default(0) @db.Decimal(6, 2)
+  validFrom     DateTime    @db.Date
+  validTo       DateTime    @db.Date
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([employeeId, timeOffTypeId])
+}
+
+// startDate/endDate are full timestamps, not dates: a HOURS-unit type needs the time of day to
+// derive a duration at all. A DAYS-unit type only reads the calendar day off them.
+model TimeOffRequest {
+  id            Int           @id @default(autoincrement())
+  employeeId    Int
+  employee      Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  timeOffTypeId Int
+  timeOffType   TimeOffType   @relation(fields: [timeOffTypeId], references: [id])
+  startDate     DateTime
+  endDate       DateTime
+  duration      Decimal       @db.Decimal(6, 2)
+  status        TimeOffStatus @default(PENDING)
+  approvedById  Int?
+  approvedBy    User?         @relation("TimeOffApprover", fields: [approvedById], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([employeeId, status])
 }
 
 model Payroll {
