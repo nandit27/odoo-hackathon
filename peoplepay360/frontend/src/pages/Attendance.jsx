@@ -1,8 +1,19 @@
+import { useEffect, useMemo, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { getAttendance, getAttendanceByEmployee } from "../api/attendance.js";
+import { getEmployeeById } from "../api/employees.js";
+import AttendanceFilterBar from "../components/hr/AttendanceFilterBar.jsx";
+import AttendanceTable from "../components/hr/AttendanceTable.jsx";
+
 export default function Attendance() {
-  return (
-    <div className="bg-white rounded shadow p-6">
-      <h1 className="text-2xl font-bold mb-2">Attendance</h1>
-      <p className="text-gray-600">Placeholder attendance page.</p>
-    </div>
-  );
+  const { employeeId } = useParams(); const [records, setRecords] = useState([]); const [employee, setEmployee] = useState(null); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
+  const [search, setSearch] = useState(""); const [dateFrom, setDateFrom] = useState(""); const [dateTo, setDateTo] = useState(""); const [department, setDepartment] = useState(""); const [status, setStatus] = useState("");
+  useEffect(() => { setLoading(true); setError(""); const request = employeeId ? Promise.all([getAttendanceByEmployee(employeeId), getEmployeeById(employeeId)]) : Promise.all([getAttendance(), Promise.resolve(null)]); request.then(([items, person]) => { setRecords(items); setEmployee(person); }).catch((err) => setError(err.message || "Attendance records could not be loaded.")).finally(() => setLoading(false)); }, [employeeId]);
+  const departments = useMemo(() => [...new Set(records.map((item) => item.department))].sort(), [records]);
+  const filtered = useMemo(() => { const query = search.trim().toLowerCase(); return records.filter((item) => (!query || item.employeeName.toLowerCase().includes(query) || item.employeeId.toLowerCase().includes(query)) && (!dateFrom || item.date >= dateFrom) && (!dateTo || item.date <= dateTo) && (!department || item.department === department) && (!status || item.status === status)); }, [records, search, dateFrom, dateTo, department, status]);
+  const clear = () => { setSearch(""); setDateFrom(""); setDateTo(""); setDepartment(""); setStatus(""); };
+  return <section><div className="mb-6 flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Human Resources</p><h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">{employee ? `${employee.fullName}'s attendance` : "Attendance"}</h1><p className="mt-1 text-sm text-slate-600">Review actual employee time against expected working schedules.</p></div><div className="flex gap-2">{employee && <Link to={`/employees/${employee.id}`} className="rounded-md border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">View employee</Link>}<Link to={employee ? `/attendance/new?employeeId=${employee.id}` : "/attendance/new"} className="rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800">Add attendance</Link></div></div>
+    <div className="overflow-hidden border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-200 px-5 py-3"><p className="text-sm text-slate-600"><span className="font-semibold text-slate-950">{filtered.length}</span> {filtered.length === 1 ? "record" : "records"}</p></div><AttendanceFilterBar {...{ search, dateFrom, dateTo, department, departments, status }} onSearch={setSearch} onDateFrom={setDateFrom} onDateTo={setDateTo} onDepartment={setDepartment} onStatus={setStatus} onClear={clear} />{loading ? <State title="Loading attendance…" /> : error ? <State title={error} error /> : !filtered.length ? <State title={records.length ? "No attendance records match your filters." : "No attendance records found."} detail={records.length ? "Try changing or clearing the current filters." : "Add an attendance record to begin."} /> : <AttendanceTable records={filtered} />}</div>
+  </section>;
 }
+function State({ title, detail, error }) { return <div className="px-6 py-16 text-center"><p className={`text-sm font-medium ${error ? "text-red-700" : "text-slate-700"}`}>{title}</p>{detail && <p className="mt-1 text-sm text-slate-500">{detail}</p>}</div>; }

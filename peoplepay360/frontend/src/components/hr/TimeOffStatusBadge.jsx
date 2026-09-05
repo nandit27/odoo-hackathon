@@ -1,0 +1,2 @@
+const styles = { Draft: "bg-slate-100 text-slate-600 ring-slate-500/20", Pending: "bg-amber-50 text-amber-700 ring-amber-600/20", Approved: "bg-emerald-50 text-emerald-700 ring-emerald-600/20", Refused: "bg-red-50 text-red-700 ring-red-600/20" };
+export default function TimeOffStatusBadge({ status }) { return <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${styles[status] || styles.Draft}`}>{status}</span>; }
