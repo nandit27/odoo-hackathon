@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("employee")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Employee {
+  id         Int        @id @default(autoincrement())
+  firstName  String
+  lastName   String
+  email      String     @unique
+  phone      String?
+  department String?
+  position   String?
+  salary     Float?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  attendance Attendance[]
+  timeOffs   TimeOff[]
+  payrolls   Payroll[]
+}
+
+model Attendance {
+  id         Int      @id @default(autoincrement())
+  employeeId Int
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date       DateTime @db.Date
+  checkIn    DateTime?
+  checkOut   DateTime?
+  status     String   @default("present")
+  createdAt  DateTime @default(now())
+}
+
+model TimeOff {
+  id         Int      @id @default(autoincrement())
+  employeeId Int
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type       String
+  startDate  DateTime @db.Date
+  endDate    DateTime @db.Date
+  reason     String?
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+}
+
+model Payroll {
+  id         Int      @id @default(autoincrement())
+  employeeId Int
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  month      Int
+  year       Int
+  baseSalary Float
+  bonus      Float    @default(0)
+  deductions Float    @default(0)
+  netPay     Float
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+
+  @@unique([employeeId, month, year])
+}
