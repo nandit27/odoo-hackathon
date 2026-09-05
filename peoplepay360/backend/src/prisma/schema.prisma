@@ -7,41 +7,108 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  ADMIN
+  HR_MANAGER
+  HR_PAYROLL_USER
+  HR_PAYROLL_MANAGER
+  EMPLOYEE
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ContractStatus {
+  ACTIVE
+  EXPIRED
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  role      String   @default("employee")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           Int       @id @default(autoincrement())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         Role      @default(EMPLOYEE)
+  employeeId   Int?      @unique
+  employee     Employee? @relation(fields: [employeeId], references: [id])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 model Employee {
-  id         Int        @id @default(autoincrement())
-  firstName  String
-  lastName   String
-  email      String     @unique
-  phone      String?
-  department String?
-  position   String?
-  salary     Float?
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  attendance Attendance[]
-  timeOffs   TimeOff[]
-  payrolls   Payroll[]
+  id          Int              @id @default(autoincrement())
+  name        String
+  email       String           @unique
+  department  String
+  jobPosition String
+  managerId   Int?
+  manager     Employee?        @relation("EmployeeManager", fields: [managerId], references: [id])
+  reports     Employee[]       @relation("EmployeeManager")
+  scheduleId  Int?
+  schedule    WorkingSchedule? @relation(fields: [scheduleId], references: [id])
+  status      EmployeeStatus   @default(ACTIVE)
+  dateJoined  DateTime         @default(now()) @db.Date
+  user        User?
+  contracts   Contract[]
+  attendance  Attendance[]
+  timeOffs    TimeOff[]
+  payrolls    Payroll[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([managerId])
+}
+
+model Contract {
+  id                Int             @id @default(autoincrement())
+  employeeId        Int
+  employee          Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  startDate         DateTime        @db.Date
+  endDate           DateTime?       @db.Date
+  wage              Decimal         @db.Decimal(12, 2)
+  salaryStructureId Int
+  salaryStructure   SalaryStructure @relation(fields: [salaryStructureId], references: [id])
+  status            ContractStatus  @default(ACTIVE)
+  department        String
+  position          String
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([employeeId])
+}
+
+// Referenced by Contract.salaryStructureId. Kept minimal until pay rules are specced.
+model SalaryStructure {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  contracts Contract[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+// pattern: [{ day, startTime, endTime, breakMinutes }]
+model WorkingSchedule {
+  id          Int        @id @default(autoincrement())
+  name        String
+  type        String
+  weeklyHours Decimal    @db.Decimal(5, 2)
+  pattern     Json
+  employees   Employee[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
 model Attendance {
-  id         Int      @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   employeeId Int
-  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  date       DateTime @db.Date
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date       DateTime  @db.Date
   checkIn    DateTime?
   checkOut   DateTime?
-  status     String   @default("present")
-  createdAt  DateTime @default(now())
+  status     String    @default("present")
+  createdAt  DateTime  @default(now())
 }
 
 model TimeOff {
