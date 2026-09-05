@@ -1,7 +1,8 @@
-import { NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { Link, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "./auth/AuthContext.jsx";
-import { getNavigationForRole } from "./auth/permissions.js";
+import { getHomeRoute, getNavigationForRole } from "./auth/permissions.js";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
+import PrimaryNavigation from "./components/PrimaryNavigation.jsx";
 import Login from "./pages/Login.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Employees from "./pages/Employees.jsx";
@@ -43,14 +44,8 @@ export default function App() {
     <div className="min-h-screen bg-slate-100 text-slate-900">
       {!isLogin && currentUser && <header className="border-b border-slate-200 bg-white">
         <nav className="flex w-full flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 sm:px-6 lg:px-8" aria-label="Primary navigation">
-          <span className="border-r border-slate-200 pr-6 text-base font-bold tracking-tight text-slate-950">PeoplePay360</span>
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
-            {navigationLinks.map(([label, to]) => (
-              <NavLink key={to + label} to={to} end={to === "/" || to === "/me"} className={({ isActive }) => `rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300 ${isActive ? "bg-slate-100 text-slate-950" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`}>
-                {label}
-              </NavLink>
-            ))}
-          </div>
+          <Link to={getHomeRoute(currentUser.role)} className="border-r border-slate-200 pr-6 text-base font-bold tracking-tight text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-300">PeoplePay360</Link>
+          <PrimaryNavigation items={navigationLinks} />
           <button type="button" onClick={signOut} className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-950">Logout</button>
         </nav>
       </header>}

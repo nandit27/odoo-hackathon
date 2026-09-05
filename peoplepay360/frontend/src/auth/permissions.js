@@ -30,25 +30,21 @@ export function getHomeRoute(role) {
 }
 
 const hrNavigation = [
-  ["Dashboard", "/"],
-  ["Employees", "/employees"],
-  ["Contracts", "/contracts"],
-  ["Working Schedules", "/working-schedules"],
-  ["Attendance", "/attendance"],
-  ["Time Off", "/timeoff"],
-  ["Allocations", "/allocations"],
-  ["Time Off Types", "/time-off-types"],
+  { label: "Employees", to: "/employees", items: [["Employees", "/employees"], ["New Employee", "/employees/new"]] },
+  { label: "Contracts", to: "/contracts", items: [["Contracts", "/contracts"], ["New Contract", "/contracts/new"], ["Working Schedules", "/working-schedules"]] },
+  { label: "Attendance", to: "/attendance" },
+  { label: "Time Off", to: "/timeoff", items: [["Requests", "/timeoff"], ["Allocations", "/allocations"], ["Time Off Types", "/time-off-types"]] },
 ];
 
 const employeeNavigation = [
-  ["My HR", "/me"],
-  ["My Profile", "/me/profile"],
-  ["My Attendance", "/me/attendance"],
-  ["My Time Off", "/me/timeoff"],
+  { label: "My HR", to: "/me" },
+  { label: "My Profile", to: "/me/profile" },
+  { label: "My Attendance", to: "/me/attendance" },
+  { label: "My Time Off", to: "/me/timeoff" },
 ];
 
 export function getNavigationForRole(role) {
   if (isEmployee(role)) return employeeNavigation;
   if (!canAccessHR(role)) return [];
-  return canAccessPayroll(role) ? [...hrNavigation, ["Payroll", "/payroll"]] : hrNavigation;
+  return canAccessPayroll(role) ? [...hrNavigation, { label: "Payroll", to: "/payroll" }] : hrNavigation;
 }
