@@ -1,8 +1,12 @@
+<<<<<<< Updated upstream
 import { Link, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "./auth/AuthContext.jsx";
 import { getHomeRoute, getNavigationForRole } from "./auth/permissions.js";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 import PrimaryNavigation from "./components/PrimaryNavigation.jsx";
+=======
+import { Link, NavLink, Route, Routes, useLocation } from "react-router-dom";
+>>>>>>> Stashed changes
 import Login from "./pages/Login.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Employees from "./pages/Employees.jsx";
@@ -31,9 +35,11 @@ import MyAttendance from "./pages/MyAttendance.jsx";
 import MyTimeOff from "./pages/MyTimeOff.jsx";
 import MyTimeOffForm from "./pages/MyTimeOffForm.jsx";
 import Payroll from "./pages/Payroll.jsx";
+import { PayrollProvider } from "./context/PayrollContext";
 
 export default function App() {
   const location = useLocation();
+<<<<<<< Updated upstream
   const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
   const isLogin = location.pathname === "/login";
@@ -93,5 +99,67 @@ export default function App() {
         </Routes>
       </main>
     </div>
+=======
+  const isPayrollRoute = location.pathname.startsWith("/payroll");
+
+  return (
+    <PayrollProvider>
+      <div className="min-h-screen bg-gray-100 text-gray-900 flex flex-col">
+        {/* Main HRMS Navigation Header */}
+        <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-xs">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-6">
+              <Link to="/" className="flex items-center gap-2 text-gray-900 font-bold text-lg">
+                <div className="w-8 h-8 rounded-lg bg-blue-600 text-white font-extrabold flex items-center justify-center text-sm">
+                  PP
+                </div>
+                <span>PeoplePay360</span>
+              </Link>
+
+              <nav className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                {links.map(([label, to]) => {
+                  const isActive =
+                    to === "/"
+                      ? location.pathname === "/"
+                      : location.pathname.startsWith(to);
+                  return (
+                    <NavLink
+                      key={to + label}
+                      to={to}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                        isActive
+                          ? "bg-blue-50 text-blue-700 font-semibold"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
+                    >
+                      {label}
+                    </NavLink>
+                  );
+                })}
+              </nav>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Odoo Hackathon Demo
+              </span>
+            </div>
+          </div>
+        </header>
+
+        {/* Content Container */}
+        <main className={`flex-1 ${isPayrollRoute ? "w-full p-4" : "max-w-4xl w-full mx-auto p-4"}`}>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/employees" element={<Employees />} />
+            <Route path="/attendance" element={<Attendance />} />
+            <Route path="/timeoff" element={<TimeOff />} />
+            <Route path="/payroll/*" element={<Payroll />} />
+          </Routes>
+        </main>
+      </div>
+    </PayrollProvider>
+>>>>>>> Stashed changes
   );
 }
